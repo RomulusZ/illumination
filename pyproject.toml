@@ -1,0 +1,71 @@
+# Illumination · 通用 Agent Harness 骨架
+#
+# 依赖策略：直接依赖在这里声明并锁死版本；传递依赖由 uv.lock 冻结。
+# 部署与 CI 一律走锁文件（uv sync --frozen）。
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[project]
+name = "illumination"
+version = "0.1.0"
+description = "Illumination · 通用 Agent Harness 骨架"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # ---- 契约与配置 ----
+    "pydantic==2.14.2",
+    "pydantic-settings==2.16.2",
+
+    # ---- 编排 ----
+    "langgraph==1.2.18",
+    "langchain-core==1.7.3",
+
+    # ---- 模型适配 ----
+    "httpx==0.28.1",
+    "tenacity==9.2.1",
+]
+
+[project.scripts]
+illumination = "illumination.ui.cli:main"
+
+[dependency-groups]
+test = [
+    "pytest==9.2.0",
+    "pytest-asyncio==1.4.1",
+    "pytest-cov==7.1.0",
+]
+
+dev = [
+    { include-group = "test" },
+    "ruff==0.17.3",
+    "mypy==2.4.1",
+    "pre-commit==4.7.0",
+]
+
+[tool.ruff]
+line-length = 99
+target-version = "py312"
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["illumination"]
+
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_unused_ignores = true
+files = ["src/illumination", "lint"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
