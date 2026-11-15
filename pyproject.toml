@@ -25,6 +25,13 @@ dependencies = [
     # ---- 模型适配 ----
     "httpx==0.28.1",
     "tenacity==9.2.1",
+
+    # ---- HTTP、持久化与定时任务 ----
+    "fastapi==0.115.14",
+    "sqlalchemy==2.0.44",
+    "alembic==1.17.2",
+    "psycopg[binary]==3.2.13",
+    "apscheduler==3.11.2",
 ]
 
 [project.scripts]
