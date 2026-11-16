@@ -35,6 +35,7 @@
 | 业务日期、周期窗口与时钟偏差 | 已落地 | `service/time_rules.py` |
 | 就绪度 L0–L3 与停锁规则 | 已落地 | `service/readiness.py` |
 | 目标锁定与版本快照 | 已落地（L3 校验、名额、append-only v1） | `service/goal_lifecycle.py` |
+| Cycle 计划与激活 | 已落地（frozen → active、单 active、14 天窗口） | `service/cycle_service.py` |
 | CLI | 已落地（`run`） | `ui/cli.py` |
 | 执行器 / 预算 / 审计 / HITL / 沙箱 | 未实现 | 见路线图 |
 

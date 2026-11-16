@@ -144,6 +144,17 @@ class SqlCycleRepository:
         ).first()
         return _to_cycle(row) if row is not None else None
 
+    def save(self, cycle: Cycle) -> None:
+        row = self._session.get(CycleRow, _uuid(cycle.cycle_id))
+        if row is None:
+            raise LookupError(f"cycle {cycle.cycle_id} 不存在")
+        row.state = cycle.state
+        row.start_at = cycle.start_at
+        row.end_at = cycle.end_at
+        row.closing_until = cycle.closing_until
+        row.budget_minutes = cycle.budget_minutes
+        self._session.flush()
+
 
 class SqlEvidenceRepository:
     """证据；统计只读取 confirmed。"""

@@ -88,6 +88,10 @@ class CycleRepositoryPort(Protocol):
         """读取目标当前 active 的单元；closing 不计入。"""
         ...
 
+    def save(self, cycle: Cycle) -> None:
+        """更新已有单元的状态与窗口；不存在时抛 LookupError。"""
+        ...
+
 
 @runtime_checkable
 class EvidenceRepositoryPort(Protocol):

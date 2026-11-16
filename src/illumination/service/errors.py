@@ -77,3 +77,19 @@ class GoalLockRejected(IlluminationError):
     def __init__(self, message: str, *, reason: str) -> None:
         super().__init__(message)
         self.reason = reason
+
+
+class CycleNotFoundError(IlluminationError):
+    """单元不存在。"""
+
+    code = "cycle_not_found"
+
+
+class CycleActivationRejected(IlluminationError):
+    """单元激活违反状态机、单 active 或提前窗口。"""
+
+    code = "cycle_activation_rejected"
+
+    def __init__(self, message: str, *, reason: str) -> None:
+        super().__init__(message)
+        self.reason = reason
