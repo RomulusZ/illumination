@@ -33,3 +33,9 @@ class ConfigurationError(IlluminationError):
     """Runtime dependencies cannot be assembled from the current settings."""
 
     code = "configuration_invalid"
+
+
+class ClockSkewRejected(IlluminationError):
+    """客户端时间与服务器时间偏差超过上限，按策略拒绝该操作。"""
+
+    code = "clock_skew_rejected"

@@ -32,6 +32,7 @@
 | Artifact store | 已落地（本地文件） | `repo/file_artifact_store.py` |
 | 目标与执行侧持久化 | 已落地（users/goals/goal_versions/goal_metrics/cycles/actions/evidences/reviews/idempotency_keys/sync_ops） | `repo/db.py`、`repo/models.py`、`alembic/` |
 | 仓储 Port 与 SQL 适配器 | 已落地（Goal/Cycle/Evidence/Review + UnitOfWork） | `types/ports.py`、`repo/sql_repositories.py` |
+| 业务日期、周期窗口与时钟偏差 | 已落地 | `service/time_rules.py` |
 | CLI | 已落地（`run`） | `ui/cli.py` |
 | 执行器 / 预算 / 审计 / HITL / 沙箱 | 未实现 | 见路线图 |
 
