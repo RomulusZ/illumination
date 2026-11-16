@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Protocol, runtime_checkable
 
 from illumination.types.common import ArtifactRef
+from illumination.types.enums import GoalRole
 from illumination.types.execution import Cycle, Evidence, Review
 from illumination.types.goal import Goal, GoalVersion
 from illumination.types.llm import LLMRequest, LLMResponse
@@ -56,6 +57,10 @@ class GoalRepositoryPort(Protocol):
 
     def find_active_primary(self, user_id: str) -> Goal | None:
         """读取该用户当前占主位的目标（planned 或 active）。"""
+        ...
+
+    def count_active_by_role(self, user_id: str, role: GoalRole) -> int:
+        """统计该用户 planned / active 的指标名额占用。"""
         ...
 
     def append_version(self, version: GoalVersion) -> None:

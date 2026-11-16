@@ -141,6 +141,7 @@ class Goal(IlluminationModel):
     status: GoalStatus = GoalStatus.PLANNED
     intent_id: str | None = None
     current_version: int = Field(default=1, ge=1)
+    plan_start_date: date | None = None
     started_at: datetime | None = None
     closed_at: datetime | None = None
 

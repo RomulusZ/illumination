@@ -39,3 +39,41 @@ class ClockSkewRejected(IlluminationError):
     """客户端时间与服务器时间偏差超过上限，按策略拒绝该操作。"""
 
     code = "clock_skew_rejected"
+
+
+class GoalNotReadyError(IlluminationError):
+    """目标未达到 L3 或反校验答否，不允许锁定。"""
+
+    code = "goal_not_ready"
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        missing_fields: tuple[str, ...] = (),
+        stop_reasons: tuple[str, ...] = (),
+    ) -> None:
+        super().__init__(message)
+        self.missing_fields = tuple(missing_fields)
+        self.stop_reasons = tuple(stop_reasons)
+
+
+class GoalQuotaExceededError(IlluminationError):
+    """主位或副位名额已满；不自动替换已有目标。"""
+
+    code = "goal_quota_exceeded"
+
+    def __init__(self, message: str, *, role: str, limit: int) -> None:
+        super().__init__(message)
+        self.role = role
+        self.limit = limit
+
+
+class GoalLockRejected(IlluminationError):
+    """锁定输入形状不合法；reason 为稳定标识。"""
+
+    code = "goal_lock_rejected"
+
+    def __init__(self, message: str, *, reason: str) -> None:
+        super().__init__(message)
+        self.reason = reason

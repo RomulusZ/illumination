@@ -62,7 +62,7 @@ class SqlGoalRepository:
                 status=goal.status,
                 name_final=goal.name_final,
                 current_version=goal.current_version,
-                plan_start_date=goal.started_at.date() if goal.started_at else None,
+                plan_start_date=goal.plan_start_date,
                 started_at=goal.started_at,
                 closed_at=goal.closed_at,
             )
@@ -85,6 +85,18 @@ class SqlGoalRepository:
             .limit(1)
         ).first()
         return _to_goal(row) if row is not None else None
+
+    def count_active_by_role(self, user_id: str, role: GoalRole) -> int:
+        count = self._session.scalar(
+            select(func.count())
+            .select_from(GoalRow)
+            .where(
+                GoalRow.user_id == _uuid(user_id),
+                GoalRow.role == role,
+                GoalRow.status.in_([GoalStatus.PLANNED, GoalStatus.ACTIVE]),
+            )
+        )
+        return int(count or 0)
 
     def append_version(self, version: GoalVersion) -> None:
         row, metrics = _version_rows(version)
@@ -202,6 +214,7 @@ def _to_goal(row: GoalRow) -> Goal:
         status=row.status,
         intent_id=str(row.intent_id) if row.intent_id else None,
         current_version=row.current_version,
+        plan_start_date=row.plan_start_date,
         started_at=row.started_at,
         closed_at=row.closed_at,
     )
