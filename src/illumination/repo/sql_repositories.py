@@ -12,6 +12,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from illumination.repo.models import Action as ActionRow
 from illumination.repo.models import Cycle as CycleRow
 from illumination.repo.models import Evidence as EvidenceRow
 from illumination.repo.models import Goal as GoalRow
@@ -25,9 +26,10 @@ from illumination.types.enums import (
     GoalStatus,
     MetricKey,
 )
-from illumination.types.execution import Cycle, Evidence, Review
+from illumination.types.execution import Action, Cycle, Evidence, Review
 from illumination.types.goal import Goal, GoalVersion, Metric
 from illumination.types.ports import (
+    ActionRepositoryPort,
     CycleRepositoryPort,
     EvidenceRepositoryPort,
     GoalRepositoryPort,
@@ -156,6 +158,30 @@ class SqlCycleRepository:
         self._session.flush()
 
 
+class SqlActionRepository:
+    """单元内动作；完成时间与状态由检查约束绑定。"""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, action: Action) -> None:
+        self._session.add(_action_row(action))
+        self._session.flush()
+
+    def get(self, action_id: str) -> Action | None:
+        row = self._session.get(ActionRow, _uuid(action_id))
+        return _to_action(row) if row is not None else None
+
+    def save(self, action: Action) -> None:
+        row = self._session.get(ActionRow, _uuid(action.action_id))
+        if row is None:
+            raise LookupError(f"action {action.action_id} 不存在")
+        row.status = action.status
+        row.completed_at = action.completed_at
+        row.budget_state = "deferred" if action.is_deferred else "allocated"
+        self._session.flush()
+
+
 class SqlEvidenceRepository:
     """证据；统计只读取 confirmed。"""
 
@@ -206,6 +232,7 @@ class SqlUnitOfWork:
         self._session = session
         self.goals: GoalRepositoryPort = SqlGoalRepository(session)
         self.cycles: CycleRepositoryPort = SqlCycleRepository(session)
+        self.actions: ActionRepositoryPort = SqlActionRepository(session)
         self.evidences: EvidenceRepositoryPort = SqlEvidenceRepository(session)
         self.reviews: ReviewRepositoryPort = SqlReviewRepository(session)
 
@@ -339,6 +366,38 @@ def _to_cycle(row: CycleRow) -> Cycle:
         end_at=row.end_at,
         closing_until=row.closing_until,
         budget_minutes=row.budget_minutes,
+    )
+
+
+def _action_row(action: Action) -> ActionRow:
+    return ActionRow(
+        id=_uuid(action.action_id),
+        cycle_id=_uuid(action.cycle_id),
+        goal_id=_uuid(action.goal_id),
+        seq=action.seq,
+        title=action.title,
+        action_type=action.action_type,
+        duration_min=action.duration_min,
+        metric_key=action.metric_key.value,
+        status=action.status,
+        budget_state="deferred" if action.is_deferred else "allocated",
+        completed_at=action.completed_at,
+    )
+
+
+def _to_action(row: ActionRow) -> Action:
+    return Action(
+        action_id=str(row.id),
+        cycle_id=str(row.cycle_id),
+        goal_id=str(row.goal_id),
+        seq=row.seq,
+        title=row.title,
+        metric_key=MetricKey(row.metric_key),
+        action_type=row.action_type,
+        duration_min=row.duration_min,
+        is_deferred=row.budget_state == "deferred",
+        status=row.status,
+        completed_at=row.completed_at,
     )
 
 

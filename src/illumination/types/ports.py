@@ -7,7 +7,7 @@ from typing import Protocol, runtime_checkable
 
 from illumination.types.common import ArtifactRef
 from illumination.types.enums import GoalRole
-from illumination.types.execution import Cycle, Evidence, Review
+from illumination.types.execution import Action, Cycle, Evidence, Review
 from illumination.types.goal import Goal, GoalVersion
 from illumination.types.llm import LLMRequest, LLMResponse
 
@@ -94,6 +94,23 @@ class CycleRepositoryPort(Protocol):
 
 
 @runtime_checkable
+class ActionRepositoryPort(Protocol):
+    """单元内动作的持久化。"""
+
+    def add(self, action: Action) -> None:
+        """写入一个动作。"""
+        ...
+
+    def get(self, action_id: str) -> Action | None:
+        """按 id 读取动作。"""
+        ...
+
+    def save(self, action: Action) -> None:
+        """更新动作状态与完成时间；不存在时抛 LookupError。"""
+        ...
+
+
+@runtime_checkable
 class EvidenceRepositoryPort(Protocol):
     """证据的持久化；计数只读取 confirmed。"""
 
@@ -135,6 +152,11 @@ class UnitOfWorkPort(Protocol):
     @property
     def cycles(self) -> CycleRepositoryPort:
         """单元仓储。"""
+        ...
+
+    @property
+    def actions(self) -> ActionRepositoryPort:
+        """动作仓储。"""
         ...
 
     @property

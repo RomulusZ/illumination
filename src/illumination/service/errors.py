@@ -93,3 +93,19 @@ class CycleActivationRejected(IlluminationError):
     def __init__(self, message: str, *, reason: str) -> None:
         super().__init__(message)
         self.reason = reason
+
+
+class ActionNotFoundError(IlluminationError):
+    """动作不存在。"""
+
+    code = "action_not_found"
+
+
+class ActionRejected(IlluminationError):
+    """动作创建或完成违反观测项、周期状态等规则。"""
+
+    code = "action_rejected"
+
+    def __init__(self, message: str, *, reason: str) -> None:
+        super().__init__(message)
+        self.reason = reason
