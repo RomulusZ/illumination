@@ -128,6 +128,7 @@ class GoalVersion(GoalVersionCreate):
 
     goal_id: str = Field(min_length=1)
     version_no: int = Field(ge=1)
+    version_id: str | None = Field(default=None, min_length=1)
 
 
 class Goal(IlluminationModel):
