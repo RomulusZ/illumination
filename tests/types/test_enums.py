@@ -7,10 +7,13 @@ import pytest
 from pydantic import TypeAdapter, ValidationError
 
 from illumination.types import (
+    ActionStatus,
+    ActionType,
     BaselineState,
     CycleResult,
     CycleState,
     EvidenceChannel,
+    EvidenceMode,
     EvidenceStatus,
     GoalChangeKind,
     GoalIntent,
@@ -47,6 +50,9 @@ _ENUMS: tuple[type[StrEnum], ...] = (
     ThresholdSource,
     ThresholdWriteWindow,
     IntervalSource,
+    ActionType,
+    ActionStatus,
+    EvidenceMode,
 )
 
 

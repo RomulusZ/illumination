@@ -122,6 +122,7 @@ START → plan → finalize → END
 | `LocalDateRange` | `types/common.py` | 本地日期闭区间；`end_date ≥ start_date`；`days` 含首尾 |
 | 领域枚举 | `types/enums.py` | Goal 8 态、Cycle 4 态、Evidence 通道/状态、Readiness L0–L3、CycleResult、StageDecision、Goal/Metric 词汇；取值与 DDL 一致 |
 | `Intent` / `Goal` / `GoalVersion` / `Metric` | `types/goal.py` | 版本只追加；1 主 + 2 辅槽位唯一；advance 必须有期限；基线三态与目标形态由代码校验 |
+| `Cycle` / `Action` / `Evidence` / `Review` | `types/execution.py` | 周期左闭右开；动作必须绑定 `metric_key`；证据来源与 `captured_at` 必填、candidate 仅设备来源；Review 两种 scope 字段互斥 |
 | `LLMRequest` / `LLMResponse` | `types/llm.py` | 消息非空；usage 非负 |
 
 约定：

@@ -133,6 +133,29 @@ class IntervalSource(StrEnum):
     FALLBACK = "fallback"
 
 
+class ActionType(StrEnum):
+    """动作是一次性还是周期重复。"""
+
+    ONCE = "once"
+    RECURRING = "recurring"
+
+
+class ActionStatus(StrEnum):
+    """动作状态；done / failed 必须有完成时间。"""
+
+    PENDING = "pending"
+    DONE = "done"
+    SKIPPED = "skipped"
+    FAILED = "failed"
+
+
+class EvidenceMode(StrEnum):
+    """证据模式；log_only 只记录，不进入单元判定。"""
+
+    NORMAL = "normal"
+    LOG_ONLY = "log_only"
+
+
 class CycleResult(StrEnum):
     """周期评估结论；partial 是目标级属性，不是周期结论。"""
 

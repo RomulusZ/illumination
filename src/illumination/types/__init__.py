@@ -2,10 +2,13 @@
 
 from illumination.types.common import ArtifactRef, LocalDateRange, RunStatus, StepStatus
 from illumination.types.enums import (
+    ActionStatus,
+    ActionType,
     BaselineState,
     CycleResult,
     CycleState,
     EvidenceChannel,
+    EvidenceMode,
     EvidenceStatus,
     GoalChangeKind,
     GoalIntent,
@@ -20,6 +23,16 @@ from illumination.types.enums import (
     StageDecision,
     ThresholdSource,
     ThresholdWriteWindow,
+)
+from illumination.types.execution import (
+    Action,
+    ActionCreate,
+    Cycle,
+    CycleCreate,
+    Evidence,
+    EvidenceCreate,
+    Review,
+    ReviewCreate,
 )
 from illumination.types.goal import (
     Goal,
@@ -42,13 +55,22 @@ from illumination.types.plan import PlanStep, RunPlan, RunRequest, RunResult, St
 from illumination.types.ports import ArtifactStorePort, ClockPort, LLMPort
 
 __all__ = [
+    "Action",
+    "ActionCreate",
+    "ActionStatus",
+    "ActionType",
     "ArtifactRef",
     "ArtifactStorePort",
     "BaselineState",
     "ClockPort",
+    "Cycle",
+    "CycleCreate",
     "CycleResult",
     "CycleState",
+    "Evidence",
     "EvidenceChannel",
+    "EvidenceCreate",
+    "EvidenceMode",
     "EvidenceStatus",
     "Goal",
     "GoalChangeKind",
@@ -75,6 +97,8 @@ __all__ = [
     "MetricKind",
     "PlanStep",
     "ReadinessLevel",
+    "Review",
+    "ReviewCreate",
     "ReviewScope",
     "RunPlan",
     "RunRequest",
