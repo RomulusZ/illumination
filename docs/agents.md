@@ -119,6 +119,8 @@ START → plan → finalize → END
 | `PlanStep` / `RunPlan` | `types/plan.py` | 步骤非空；`step_id` 唯一 |
 | `RunResult` | `types/plan.py` | `finished_at ≥ started_at` |
 | `ArtifactRef` | `types/common.py` | `sha256` 为 64 位小写十六进制 |
+| `LocalDateRange` | `types/common.py` | 本地日期闭区间；`end_date ≥ start_date`；`days` 含首尾 |
+| 领域枚举 | `types/enums.py` | Goal 8 态、Cycle 4 态、Evidence 通道/状态、Readiness L0–L3、CycleResult、StageDecision；取值与 DDL 一致 |
 | `LLMRequest` / `LLMResponse` | `types/llm.py` | 消息非空；usage 非负 |
 
 约定：
