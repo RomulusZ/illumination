@@ -55,18 +55,12 @@ def submit_evidence(
         if replayed is not None:
             return replayed
 
-    if uow.goals.get_owned(user_id, evidence.goal_id) is None:
-        raise EvidenceRejected("目标不存在或不属于当前用户", reason="goal_not_found")
-    cycle_id = _resolve_cycle(uow, evidence)
-
-    payload = evidence.model_dump()
-    payload["cycle_id"] = cycle_id
-    created = Evidence(
-        evidence_id=str(uuid.uuid4()),
-        day_cutoff_date=business_date(
-            evidence.captured_at, timezone=timezone, day_cutoff=day_cutoff
-        ),
-        **payload,
+    created = prepare_evidence(
+        uow,
+        user_id=user_id,
+        evidence=evidence,
+        timezone=timezone,
+        day_cutoff=day_cutoff,
     )
     try:
         uow.evidences.add(created)
@@ -95,6 +89,28 @@ def submit_evidence(
         uow.rollback()
         raise
     return _result(uow, created, already_recorded=False)
+
+
+def prepare_evidence(
+    uow: UnitOfWorkPort,
+    *,
+    user_id: str,
+    evidence: EvidenceCreate,
+    timezone: str,
+    day_cutoff: time,
+) -> Evidence:
+    """校验归属并构造证据，不写库、不提交，供离线组合同事务落账。"""
+    if uow.goals.get_owned(user_id, evidence.goal_id) is None:
+        raise EvidenceRejected("目标不存在或不属于当前用户", reason="goal_not_found")
+    payload = evidence.model_dump()
+    payload["cycle_id"] = _resolve_cycle(uow, evidence)
+    return Evidence(
+        evidence_id=str(uuid.uuid4()),
+        day_cutoff_date=business_date(
+            evidence.captured_at, timezone=timezone, day_cutoff=day_cutoff
+        ),
+        **payload,
+    )
 
 
 def count_confirmed(uow: UnitOfWorkPort, *, goal_id: str) -> int:

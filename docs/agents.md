@@ -38,6 +38,7 @@
 | Cycle 计划与激活 | 已落地（frozen → active、单 active、14 天窗口） | `service/cycle_service.py` |
 | 动作计划与完成 | 已落地（绑定观测项、重复完成幂等） | `service/action_service.py` |
 | 证据提交与幂等 | 已落地（manual/candidate/confirmed、双通道去重、仅 confirmed 计数） | `service/evidence_service.py` |
+| 离线补传与逐字段裁决 | 已落地（仅证据/动作完成、时钟策略、重放去重、冲突不覆盖） | `service/offline_sync.py` |
 | CLI | 已落地（`run`） | `ui/cli.py` |
 | 执行器 / 预算 / 审计 / HITL / 沙箱 | 未实现 | 见路线图 |
 
@@ -132,6 +133,7 @@ START → plan → finalize → END
 | `Intent` / `Goal` / `GoalVersion` / `Metric` | `types/goal.py` | 版本只追加；1 主 + 2 辅槽位唯一；advance 必须有期限；基线三态与目标形态由代码校验 |
 | `Cycle` / `Action` / `Evidence` / `Review` | `types/execution.py` | 周期左闭右开；动作必须绑定 `metric_key`；证据来源与 `captured_at` 必填、candidate 仅设备来源且需 `external_id`；Review 两种 scope 字段互斥 |
 | `IdempotencyRecord` / `SyncOpRecord` | `types/execution.py` | 幂等记录只存证据指针；离线账本按 `(user_id, client_op_id)` 去重 |
+| `OfflineOperation` / `OfflineOperationResult` | `service/offline_sync.py` | 只应用证据与动作完成；逐字段给出 accepted/rejected/conflict 与原因码 |
 | `LLMRequest` / `LLMResponse` | `types/llm.py` | 消息非空；usage 非负 |
 
 约定：

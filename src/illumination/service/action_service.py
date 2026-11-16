@@ -69,6 +69,22 @@ def complete_action(
     uow: UnitOfWorkPort, *, action_id: str, completed_at: datetime
 ) -> ActionCompletionResult:
     """完成动作；重复完成原样返回，不增加任何计数。"""
+    result = build_action_completion(uow, action_id=action_id, completed_at=completed_at)
+    if result.already_completed:
+        return result
+    try:
+        uow.actions.save(result.action)
+        uow.commit()
+    except Exception:
+        uow.rollback()
+        raise
+    return result
+
+
+def build_action_completion(
+    uow: UnitOfWorkPort, *, action_id: str, completed_at: datetime
+) -> ActionCompletionResult:
+    """校验并构造完成结果，不写库、不提交，供离线组合同事务落账。"""
     _require_aware(completed_at, "completed_at")
     action = uow.actions.get(action_id)
     if action is None:
@@ -89,12 +105,6 @@ def complete_action(
     completed = action.model_copy(
         update={"status": ActionStatus.DONE, "completed_at": completed_at}
     )
-    try:
-        uow.actions.save(completed)
-        uow.commit()
-    except Exception:
-        uow.rollback()
-        raise
     return ActionCompletionResult(action=completed, already_completed=False)
 
 
