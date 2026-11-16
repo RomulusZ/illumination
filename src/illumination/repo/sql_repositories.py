@@ -143,6 +143,13 @@ class SqlGoalRepository:
                 VersionRow.version_no == version_no,
             )
         ).first()
+        return self._load_version(row)
+
+    def get_version_by_id(self, version_id: str) -> GoalVersion | None:
+        row = self._session.get(VersionRow, _uuid(version_id))
+        return self._load_version(row)
+
+    def _load_version(self, row: VersionRow | None) -> GoalVersion | None:
         if row is None:
             return None
         metrics = self._session.scalars(
@@ -209,6 +216,14 @@ class SqlActionRepository:
         row.budget_state = "deferred" if action.is_deferred else "allocated"
         self._session.flush()
 
+    def list_for_cycle(self, cycle_id: str) -> list[Action]:
+        rows = self._session.scalars(
+            select(ActionRow)
+            .where(ActionRow.cycle_id == _uuid(cycle_id))
+            .order_by(ActionRow.seq, ActionRow.id)
+        ).all()
+        return [_to_action(row) for row in rows]
+
 
 class SqlEvidenceRepository:
     """证据；统计只读取 confirmed。"""
@@ -234,6 +249,14 @@ class SqlEvidenceRepository:
             )
         )
         return int(count or 0)
+
+    def list_for_cycle(self, cycle_id: str) -> list[Evidence]:
+        rows = self._session.scalars(
+            select(EvidenceRow)
+            .where(EvidenceRow.cycle_id == _uuid(cycle_id))
+            .order_by(EvidenceRow.captured_at, EvidenceRow.id)
+        ).all()
+        return [_to_evidence(row) for row in rows]
 
 
 class SqlReviewRepository:

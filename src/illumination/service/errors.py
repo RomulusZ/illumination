@@ -95,6 +95,16 @@ class CycleActivationRejected(IlluminationError):
         self.reason = reason
 
 
+class CycleReviewRejected(IlluminationError):
+    """周期评估违反状态机、宽限期或 append-only 约束。"""
+
+    code = "cycle_review_rejected"
+
+    def __init__(self, message: str, *, reason: str) -> None:
+        super().__init__(message)
+        self.reason = reason
+
+
 class EvidenceNotFoundError(IlluminationError):
     """证据不存在。"""
 

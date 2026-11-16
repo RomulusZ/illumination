@@ -82,6 +82,10 @@ class GoalRepositoryPort(Protocol):
         """读取指定版本快照；不存在返回 None。"""
         ...
 
+    def get_version_by_id(self, version_id: str) -> GoalVersion | None:
+        """按不可变版本 id 读取快照，避免误用目标当前版本。"""
+        ...
+
 
 @runtime_checkable
 class CycleRepositoryPort(Protocol):
@@ -120,6 +124,10 @@ class ActionRepositoryPort(Protocol):
         """更新动作状态与完成时间；不存在时抛 LookupError。"""
         ...
 
+    def list_for_cycle(self, cycle_id: str) -> list[Action]:
+        """按单元读取动作，供评估生成确定性计数快照。"""
+        ...
+
 
 @runtime_checkable
 class EvidenceRepositoryPort(Protocol):
@@ -135,6 +143,10 @@ class EvidenceRepositoryPort(Protocol):
 
     def count_confirmed(self, goal_id: str) -> int:
         """统计该目标已成定值的证据条数。"""
+        ...
+
+    def list_for_cycle(self, cycle_id: str) -> list[Evidence]:
+        """按单元读取证据；评估在 Service 中过滤 confirmed 与业务窗口。"""
         ...
 
 
