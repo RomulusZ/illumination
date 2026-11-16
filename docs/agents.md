@@ -153,6 +153,7 @@ LANGSMITH_TRACING / LANGSMITH_API_KEY / LANGSMITH_PROJECT
 ## 8. 测试
 
 - 默认 mock LLM 与网络，不做真实调用。
+- 数据库相关集成、迁移、并发与 E2E 测试使用隔离的 PostgreSQL 17 测试库，禁止 SQLite 回退。
 - 时间用 `FakeClock`，不依赖真实时钟。
 - 目录镜像源码；共享 fake 放 `tests/fakes.py`。
 - 每条 ARCH 规则至少一个合法、一个违规用例。

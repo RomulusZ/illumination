@@ -16,6 +16,8 @@ LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 AgentMode = Literal["off", "explore", "all"]
 ClockSkewStrategy = Literal["clamp_and_warn", "reject"]
 
+_DEV_DATABASE_URL = "postgresql+psycopg://localhost:5432/illumination"
+
 
 class Settings(BaseSettings):
     """应用配置。必填项缺失或取值非法时必须启动即失败。"""
@@ -34,7 +36,7 @@ class Settings(BaseSettings):
     illumination_timezone: str = "Asia/Shanghai"
 
     # 2. 应用与持久化
-    illumination_database_url: str = "sqlite:///./.data/illumination.db"
+    illumination_database_url: str = _DEV_DATABASE_URL
     illumination_invite_codes: SecretStr = SecretStr("")
     illumination_agent_mode: AgentMode = "off"
     illumination_day_cutoff: str = Field(default="04:00", pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
@@ -76,16 +78,16 @@ class Settings(BaseSettings):
             url = make_url(value)
         except ArgumentError as exc:
             raise ValueError("ILLUMINATION_DATABASE_URL 必须是有效的 SQLAlchemy URL") from exc
-        if url.drivername.startswith("sqlite") and not url.database:
-            raise ValueError("SQLite URL 必须包含数据库文件或 :memory:")
+        if url.get_backend_name() != "postgresql":
+            raise ValueError("ILLUMINATION_DATABASE_URL 仅支持 PostgreSQL")
         return value
 
     @model_validator(mode="after")
     def _validate_conditionals(self) -> Self:
         if self.is_prod and not self.openai_api_key.get_secret_value().strip():
             raise ValueError("生产环境必须提供 OPENAI_API_KEY")
-        if self.is_prod and not self.illumination_database_url.strip():
-            raise ValueError("生产环境必须提供 ILLUMINATION_DATABASE_URL")
+        if self.is_prod and self.illumination_database_url == _DEV_DATABASE_URL:
+            raise ValueError("生产环境必须显式提供 ILLUMINATION_DATABASE_URL")
         if self.is_prod and not self.illumination_invite_codes.get_secret_value().strip():
             raise ValueError("生产环境必须提供 ILLUMINATION_INVITE_CODES")
         if self.langsmith_tracing and not self._secret_value(self.langsmith_api_key):

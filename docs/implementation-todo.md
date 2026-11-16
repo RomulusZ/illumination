@@ -8,7 +8,9 @@
 - 顺序执行，不跳节点；每个节点完成后必须保证**历史测试也全部通过**。
 - 每个节点的生产代码约 **40–200 行**，测试代码不计入；超过 200 行就先拆分，不堆隐式复杂度。
 - 每个节点同时交付实现与测试，禁止先写空壳再补逻辑。
-- 默认使用 SQLite + FakeLLM + FakeClock 测试，不访问真实 PostgreSQL、网络或模型。
+- 纯类型与领域服务测试使用 FakeLLM + FakeClock，不连接数据库、网络或真实模型。
+- 仓储、迁移、幂等、并发与 E2E 测试必须使用隔离的 PostgreSQL 17 测试库，禁止 SQLite 替代或静默回退。
+- PostgreSQL 测试会话只建一次 Schema，普通测试用事务回滚隔离；迁移测试使用独立空库。
 - 保留现有六层骨架与 `RunRequest → RunPlan → RunResult` 示例，新增能力不得破坏它。
 - 跨层依赖继续由 `arch_checker` 阻断；数据库和 HTTP 细节不得进入 `types` / `service`。
 - 每节点提交前运行：
@@ -47,7 +49,7 @@ git commit -m "chore: bootstrap generic agent harness skeleton"
 
 - **实现**：在 `pyproject.toml` 增加 FastAPI、SQLAlchemy、Alembic、APScheduler；在 `config/settings.py` 增加 `database_url`、`invite_code`、`agent_mode`、日界/提醒时间、时钟偏差策略，生产环境校验必填项。
 - **规模**：约 80–130 行。
-- **测试**：`tests/config/test_settings.py` 增加默认值、非法 URL、生产缺配置失败、时界格式校验。
+- **测试**：`tests/config/test_settings.py` 验证 PostgreSQL 默认值、拒绝 SQLite/其他数据库 URL、生产必须显式配置数据库、时界格式。
 - **验收**：`uv sync` 后 `uv run pytest tests/config -q` 通过，旧配置测试不回归。
 - **提交**：`feat(config): add application and persistence settings`
 
@@ -79,8 +81,8 @@ git commit -m "chore: bootstrap generic agent harness skeleton"
 
 - **实现**：`repo/db.py` 提供 engine/session 工厂；`repo/models.py` 增加 users/goals/goal_versions/metrics 表；`alembic/` 建立首个可重复执行迁移。
 - **规模**：约 170–200 行。
-- **测试**：`tests/repo/test_db_schema.py` 用临时 SQLite 执行 upgrade/downgrade/upgrade，验证唯一约束与外键。
-- **验收**：空库可一次迁移到目标版本，重复初始化不报错。
+- **测试**：`tests/repo/test_db_schema.py` 用独立空 PostgreSQL 17 测试库执行 upgrade/downgrade/upgrade，验证部分唯一索引、外键与事务行为；CI 提供 PostgreSQL 17 Service。
+- **验收**：空 PostgreSQL 库可迁移到目标版本，重复 upgrade 到 head 无副作用；数据库不可用时明确失败，不回退 SQLite。
 - **提交**：`feat(repo): add goal persistence schema`
 
 ### P0-06 建立执行侧持久化模型与幂等表
@@ -95,7 +97,7 @@ git commit -m "chore: bootstrap generic agent harness skeleton"
 
 - **实现**：`types/ports.py` 增加 Goal/Cycle/Evidence/Review Repository Protocol 与 UnitOfWork；`repo/sql_repositories.py` 实现 CRUD、append-only version 和事务提交。
 - **规模**：约 180–200 行。
-- **测试**：`tests/repo/test_sql_repositories.py` 用 SQLite 验证保存/读取、版本追加、事务回滚。
+- **测试**：`tests/repo/test_sql_repositories.py` 用真实 PostgreSQL 验证保存/读取、版本追加、事务回滚；幂等与唯一约束增加独立连接的并发竞争用例。
 - **验收**：Service 可只依赖 Protocol；异常时事务完整回滚，不出现半写入。
 - **提交**：`feat(repo): implement transactional domain repositories`
 
@@ -257,7 +259,7 @@ git commit -m "chore: bootstrap generic agent harness skeleton"
 
 ### P0-26 完成 P0 端到端旅程
 
-- **实现**：`tests/e2e/test_p0_journey.py` 用 TestClient + SQLite + FakeLLM 串联：登录 → 对话 → 就绪 → 锁 Goal → 激活 Cycle → 创建/完成 Action → 提交证据 → Review → 关闭。
+- **实现**：`tests/e2e/test_p0_journey.py` 用 TestClient + 隔离的 PostgreSQL 测试库 + FakeLLM 串联：登录 → 对话 → 就绪 → 锁 Goal → 激活 Cycle → 创建/完成 Action → 提交证据 → Review → 关闭。
 - **规模**：测试约 150–200 行；只允许补不超过 40 行的装配修正，不借 E2E 新增大功能。
 - **测试**：本文件即验收测试，另断言数据库只有 1 个 active Goal/Cycle、证据计数正确、版本追加。
 - **验收**：`uv run pytest tests/e2e/test_p0_journey.py -q` 独立通过，完整 `uv run pytest` 通过。
@@ -268,7 +270,7 @@ git commit -m "chore: bootstrap generic agent harness skeleton"
 - **实现**：增加 OpenAPI 快照/契约测试、已使用错误码清单和 README 启动命令；将 P0 已实现与未实现能力明确列出，不虚报 143 端点完成。
 - **规模**：约 80–140 行（不含 OpenAPI 生成物）。
 - **测试**：`tests/api/test_openapi_contract.py` 验证路由注册、错误响应 schema、快照变更必须显式更新。
-- **验收**：五项质量门全部通过；CI 使用相同命令；从空 SQLite 可按 README 启动。
+- **验收**：五项质量门全部通过；CI 使用相同命令并启动 PostgreSQL 17 Service；从空 PostgreSQL 库可按 README 启动。
 - **提交**：`docs(api): freeze p0 openapi and delivery gates`
 
 ---
@@ -283,7 +285,7 @@ git commit -m "<本节点给出的提交信息>"
 git log -1 --oneline
 ```
 
-不要 `git add -A` 后不看差异；不要提交 `.env`、SQLite 文件、`out/`、`.data/`、缓存或密钥。若某节点未通过完整测试，不创建“完成”提交。
+不要 `git add -A` 后不看差异；不要提交 `.env`、数据库文件、`out/`、`.data/`、缓存或密钥。若某节点未通过完整测试，不创建“完成”提交。
 
 ## 7. P0 完成定义
 

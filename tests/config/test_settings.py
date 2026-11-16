@@ -11,7 +11,7 @@ def test_defaults_are_dev_safe() -> None:
     assert settings.illumination_env == "dev"
     assert not settings.is_prod
     assert settings.illumination_max_steps == 8
-    assert settings.illumination_database_url == "sqlite:///./.data/illumination.db"
+    assert settings.illumination_database_url == "postgresql+psycopg://localhost:5432/illumination"
     assert settings.illumination_agent_mode == "off"
     assert settings.illumination_day_cutoff == "04:00"
     assert settings.illumination_latest_start_time == "21:00"
@@ -21,7 +21,13 @@ def test_defaults_are_dev_safe() -> None:
 
 def test_prod_requires_openai_api_key() -> None:
     with pytest.raises(ValidationError):
-        Settings(_env_file=None, illumination_env="prod", openai_api_key="")
+        Settings(
+            _env_file=None,
+            illumination_env="prod",
+            openai_api_key="",
+            illumination_database_url="postgresql+psycopg://db.internal/illumination",
+            illumination_invite_codes="bb_test=测试用户",
+        )
 
 
 def test_prod_with_required_settings_passes() -> None:
@@ -43,13 +49,28 @@ def test_prod_requires_invite_codes() -> None:
             _env_file=None,
             illumination_env="prod",
             openai_api_key="sk-test",
+            illumination_database_url="postgresql+psycopg://db.internal/illumination",
             illumination_invite_codes="",
         )
     assert "INVITE_CODES" in str(exc_info.value)
 
 
-@pytest.mark.parametrize("database_url", ["", "not-a-url", "sqlite://relative"])
-def test_invalid_database_url_is_rejected(database_url: str) -> None:
+def test_prod_requires_explicit_database_url() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(
+            _env_file=None,
+            illumination_env="prod",
+            openai_api_key="sk-test",
+            illumination_invite_codes="bb_test=测试用户",
+        )
+    assert "DATABASE_URL" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "database_url",
+    ["", "not-a-url", "sqlite:///./.data/illumination.db", "mysql://localhost/illumination"],
+)
+def test_invalid_or_non_postgresql_database_url_is_rejected(database_url: str) -> None:
     with pytest.raises(ValidationError):
         Settings(_env_file=None, illumination_database_url=database_url)
 
