@@ -54,6 +54,24 @@ class ReadinessLevel(StrEnum):
     L3 = "L3"
 
 
+class ValidityAnswer(StrEnum):
+    """反校验 Q1：指标能否代表目标。"""
+
+    YES = "yes"
+    PARTIAL = "partial"
+    NO = "no"
+    UNKNOWN = "unknown"
+
+
+class AvailabilityAnswer(StrEnum):
+    """反校验 Q2：证据能否持续拿到。"""
+
+    NOW = "now"
+    NEEDS_SETUP = "needs_setup"
+    NO = "no"
+    UNKNOWN = "unknown"
+
+
 class GoalIntent(StrEnum):
     """目标的意图类型；maintain 不允许占用主位。"""
 
