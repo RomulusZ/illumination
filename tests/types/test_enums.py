@@ -7,15 +7,25 @@ import pytest
 from pydantic import TypeAdapter, ValidationError
 
 from illumination.types import (
+    BaselineState,
     CycleResult,
     CycleState,
     EvidenceChannel,
     EvidenceStatus,
+    GoalChangeKind,
+    GoalIntent,
+    GoalRole,
     GoalStatus,
+    IntervalSource,
     LocalDateRange,
+    MetricDirection,
+    MetricKey,
+    MetricKind,
     ReadinessLevel,
     ReviewScope,
     StageDecision,
+    ThresholdSource,
+    ThresholdWriteWindow,
 )
 
 _ENUMS: tuple[type[StrEnum], ...] = (
@@ -27,6 +37,16 @@ _ENUMS: tuple[type[StrEnum], ...] = (
     CycleResult,
     ReviewScope,
     StageDecision,
+    GoalIntent,
+    GoalRole,
+    GoalChangeKind,
+    MetricKey,
+    MetricKind,
+    MetricDirection,
+    BaselineState,
+    ThresholdSource,
+    ThresholdWriteWindow,
+    IntervalSource,
 )
 
 
@@ -40,7 +60,7 @@ def test_enum_json_round_trip(enum_type: type[StrEnum]) -> None:
 @pytest.mark.parametrize("enum_type", _ENUMS)
 def test_enum_rejects_unknown_value(enum_type: type[StrEnum]) -> None:
     with pytest.raises(ValidationError):
-        TypeAdapter(enum_type).validate_python("unknown")
+        TypeAdapter(enum_type).validate_python("__invalid__")
 
 
 def test_enum_members_match_design_contract() -> None:

@@ -120,7 +120,8 @@ START → plan → finalize → END
 | `RunResult` | `types/plan.py` | `finished_at ≥ started_at` |
 | `ArtifactRef` | `types/common.py` | `sha256` 为 64 位小写十六进制 |
 | `LocalDateRange` | `types/common.py` | 本地日期闭区间；`end_date ≥ start_date`；`days` 含首尾 |
-| 领域枚举 | `types/enums.py` | Goal 8 态、Cycle 4 态、Evidence 通道/状态、Readiness L0–L3、CycleResult、StageDecision；取值与 DDL 一致 |
+| 领域枚举 | `types/enums.py` | Goal 8 态、Cycle 4 态、Evidence 通道/状态、Readiness L0–L3、CycleResult、StageDecision、Goal/Metric 词汇；取值与 DDL 一致 |
+| `Intent` / `Goal` / `GoalVersion` / `Metric` | `types/goal.py` | 版本只追加；1 主 + 2 辅槽位唯一；advance 必须有期限；基线三态与目标形态由代码校验 |
 | `LLMRequest` / `LLMResponse` | `types/llm.py` | 消息非空；usage 非负 |
 
 约定：

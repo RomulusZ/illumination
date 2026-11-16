@@ -54,6 +54,85 @@ class ReadinessLevel(StrEnum):
     L3 = "L3"
 
 
+class GoalIntent(StrEnum):
+    """目标的意图类型；maintain 不允许占用主位。"""
+
+    ADVANCE = "advance"
+    MAINTAIN = "maintain"
+
+
+class GoalRole(StrEnum):
+    """目标名额角色：1 个主位 + 最多 2 个辅位（P0 单目标切片）。"""
+
+    PRIMARY = "primary"
+    SECONDARY = "secondary"
+
+
+class GoalChangeKind(StrEnum):
+    """目标版本变更类型；版本只追加，不回写历史。"""
+
+    INITIAL = "initial"
+    SEMANTIC = "semantic"
+    INTENT_CHANGE = "intent_change"
+    REPLAN = "replan"
+
+
+class MetricKey(StrEnum):
+    """指标在目标版本内的固定槽位。"""
+
+    PRIMARY = "primary"
+    SECONDARY_1 = "secondary_1"
+    SECONDARY_2 = "secondary_2"
+
+
+class MetricKind(StrEnum):
+    """指标形态，决定目标值的表达方式。"""
+
+    NUMERIC = "numeric"
+    STATE = "state"
+    ARTIFACT = "artifact"
+
+
+class MetricDirection(StrEnum):
+    """数值指标的期望方向。"""
+
+    UP = "up"
+    DOWN = "down"
+    HOLD = "hold"
+
+
+class BaselineState(StrEnum):
+    """基线三态；unknown 时不得给出数值。"""
+
+    MEASURED = "measured"
+    ESTIMATE = "estimate"
+    UNKNOWN = "unknown"
+
+
+class ThresholdSource(StrEnum):
+    """阈值来源；不含模型生成。"""
+
+    USER_INPUT = "user_input"
+    TEMPLATE_DEFAULT = "template_default"
+    USER_CONFIRMED_CANDIDATE = "user_confirmed_candidate"
+
+
+class ThresholdWriteWindow(StrEnum):
+    """阈值只允许在锁定前或重规划两个窗口写入。"""
+
+    PLAN = "plan"
+    REPLAN = "replan"
+
+
+class IntervalSource(StrEnum):
+    """反馈间隔的来源；推断值必须由用户确认后才可进 L3。"""
+
+    USER_INPUT = "user_input"
+    TEMPLATE_DEFAULT = "template_default"
+    RULE_INFERRED = "rule_inferred"
+    FALLBACK = "fallback"
+
+
 class CycleResult(StrEnum):
     """周期评估结论；partial 是目标级属性，不是周期结论。"""
 
