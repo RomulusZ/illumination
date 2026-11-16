@@ -95,6 +95,22 @@ class CycleActivationRejected(IlluminationError):
         self.reason = reason
 
 
+class EvidenceNotFoundError(IlluminationError):
+    """证据不存在。"""
+
+    code = "evidence_not_found"
+
+
+class EvidenceRejected(IlluminationError):
+    """证据提交违反归属、观测项、状态或幂等一致性。"""
+
+    code = "evidence_rejected"
+
+    def __init__(self, message: str, *, reason: str) -> None:
+        super().__init__(message)
+        self.reason = reason
+
+
 class ActionNotFoundError(IlluminationError):
     """动作不存在。"""
 

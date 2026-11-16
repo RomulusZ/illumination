@@ -516,9 +516,7 @@ class Evidence(Base):
         nullable=False,
         server_default=text("'confirmed'"),
     )
-    confirmed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     source_device: Mapped[str | None] = mapped_column(Text)
     source_ref: Mapped[dict[str, Any]] = mapped_column(

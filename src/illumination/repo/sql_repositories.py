@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import func, select
@@ -18,22 +19,35 @@ from illumination.repo.models import Evidence as EvidenceRow
 from illumination.repo.models import Goal as GoalRow
 from illumination.repo.models import GoalMetric as MetricRow
 from illumination.repo.models import GoalVersion as VersionRow
+from illumination.repo.models import IdempotencyKey as IdempotencyRow
 from illumination.repo.models import Review as ReviewRow
+from illumination.repo.models import SyncOp as SyncOpRow
 from illumination.types.enums import (
     EvidenceStatus,
     GoalChangeKind,
     GoalRole,
     GoalStatus,
     MetricKey,
+    SyncOpOutcome,
+    SyncOpType,
 )
-from illumination.types.execution import Action, Cycle, Evidence, Review
+from illumination.types.execution import (
+    Action,
+    Cycle,
+    Evidence,
+    IdempotencyRecord,
+    Review,
+    SyncOpRecord,
+)
 from illumination.types.goal import Goal, GoalVersion, Metric
 from illumination.types.ports import (
     ActionRepositoryPort,
     CycleRepositoryPort,
     EvidenceRepositoryPort,
     GoalRepositoryPort,
+    IdempotencyRepositoryPort,
     ReviewRepositoryPort,
+    SyncOpRepositoryPort,
 )
 
 _METRIC_ORDER = {key: index for index, key in enumerate(MetricKey)}
@@ -45,6 +59,11 @@ def _uuid(value: str) -> uuid.UUID:
 
 def _maybe_uuid(value: str | None) -> uuid.UUID | None:
     return _uuid(value) if value else None
+
+
+def _request_key(user_id: str, scope: str, key: str) -> str:
+    """把用户与 scope 编进幂等主键，避免跨用户碰撞。"""
+    return f"{scope}:{user_id}:{key}"
 
 
 class SqlGoalRepository:
@@ -73,6 +92,15 @@ class SqlGoalRepository:
 
     def get(self, goal_id: str) -> Goal | None:
         row = self._session.get(GoalRow, _uuid(goal_id))
+        return _to_goal(row) if row is not None else None
+
+    def get_owned(self, user_id: str, goal_id: str) -> Goal | None:
+        row = self._session.scalars(
+            select(GoalRow).where(
+                GoalRow.id == _uuid(goal_id),
+                GoalRow.user_id == _uuid(user_id),
+            )
+        ).first()
         return _to_goal(row) if row is not None else None
 
     def find_active_primary(self, user_id: str) -> Goal | None:
@@ -225,6 +253,77 @@ class SqlReviewRepository:
         return _to_review(row) if row is not None else None
 
 
+class SqlIdempotencyRepository:
+    """在线幂等缓存；主键由 user、scope 与请求键组合，天然跨用户隔离。"""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def find(self, *, user_id: str, scope: str, key: str) -> IdempotencyRecord | None:
+        row = self._session.get(IdempotencyRow, _request_key(user_id, scope, key))
+        if row is None or row.user_id is None or str(row.user_id) != user_id:
+            return None
+        return IdempotencyRecord(
+            user_id=user_id,
+            scope=row.scope,
+            key=key,
+            evidence_id=str(row.response_body["evidence_id"]),
+            expires_at=row.expires_at,
+        )
+
+    def save(
+        self,
+        *,
+        user_id: str,
+        scope: str,
+        key: str,
+        evidence_id: str,
+        expires_at: datetime,
+    ) -> None:
+        self._session.add(
+            IdempotencyRow(
+                key=_request_key(user_id, scope, key),
+                user_id=_uuid(user_id),
+                scope=scope,
+                response_code=201,
+                response_body={"evidence_id": evidence_id},
+                expires_at=expires_at,
+            )
+        )
+        self._session.flush()
+
+
+class SqlSyncOpRepository:
+    """离线操作账本；唯一键由数据库兜底。"""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def get(self, *, user_id: str, client_op_id: str) -> SyncOpRecord | None:
+        row = self._session.scalars(
+            select(SyncOpRow).where(
+                SyncOpRow.user_id == _uuid(user_id),
+                SyncOpRow.client_op_id == _uuid(client_op_id),
+            )
+        ).first()
+        return _to_sync_op(row) if row is not None else None
+
+    def add(self, record: SyncOpRecord) -> None:
+        self._session.add(
+            SyncOpRow(
+                user_id=_uuid(record.user_id),
+                client_op_id=_uuid(record.client_op_id),
+                device_id=record.device_id,
+                op_type=record.op_type.value,
+                captured_at=record.captured_at,
+                outcome=record.outcome.value,
+                result_ref=_maybe_uuid(record.result_ref),
+                error_code=record.error_code,
+            )
+        )
+        self._session.flush()
+
+
 class SqlUnitOfWork:
     """一次事务内的仓储集合；服务层通过 Protocol 使用。"""
 
@@ -235,6 +334,8 @@ class SqlUnitOfWork:
         self.actions: ActionRepositoryPort = SqlActionRepository(session)
         self.evidences: EvidenceRepositoryPort = SqlEvidenceRepository(session)
         self.reviews: ReviewRepositoryPort = SqlReviewRepository(session)
+        self.idempotency: IdempotencyRepositoryPort = SqlIdempotencyRepository(session)
+        self.sync_ops: SyncOpRepositoryPort = SqlSyncOpRepository(session)
 
     def commit(self) -> None:
         self._session.commit()
@@ -414,6 +515,7 @@ def _evidence_row(evidence: Evidence) -> EvidenceRow:
         confirmed_at=evidence.confirmed_at,
         expires_at=evidence.expires_at,
         source_device=evidence.source_device,
+        source_ref=({"external_id": evidence.external_id} if evidence.external_id else {}),
         entered_value=evidence.entered_value,
         entered_unit=evidence.entered_unit,
         value_calc=evidence.value_calc,
@@ -438,6 +540,7 @@ def _to_evidence(row: EvidenceRow) -> Evidence:
         confirmed_at=row.confirmed_at,
         expires_at=row.expires_at,
         source_device=row.source_device,
+        external_id=row.source_ref.get("external_id"),
         entered_value=float(row.entered_value) if row.entered_value is not None else None,
         entered_unit=row.entered_unit,
         value_calc=float(row.value_calc) if row.value_calc is not None else None,
@@ -486,4 +589,17 @@ def _to_review(row: ReviewRow) -> Review:
         summary=row.summary,
         is_deferred=row.deferred,
         override_reason=row.override_reason,
+    )
+
+
+def _to_sync_op(row: SyncOpRow) -> SyncOpRecord:
+    return SyncOpRecord(
+        user_id=str(row.user_id),
+        client_op_id=str(row.client_op_id),
+        device_id=row.device_id,
+        op_type=SyncOpType(row.op_type),
+        captured_at=row.captured_at,
+        outcome=SyncOpOutcome(row.outcome),
+        result_ref=str(row.result_ref) if row.result_ref else None,
+        error_code=row.error_code,
     )

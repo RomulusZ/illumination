@@ -152,8 +152,20 @@ def test_evidence_status_shape_matches_database_rules() -> None:
         expires_at=_START,
         source_channel=EvidenceChannel.DEVICE,
         source_device="garmin:watch",
+        external_id="garmin-activity-1",
     )
     assert candidate.status is EvidenceStatus.CANDIDATE
+
+
+def test_candidate_evidence_requires_external_id() -> None:
+    with pytest.raises(ValidationError, match="外部"):
+        _evidence(
+            status=EvidenceStatus.CANDIDATE,
+            confirmed_at=None,
+            expires_at=_START,
+            source_channel=EvidenceChannel.DEVICE,
+            source_device="garmin:watch",
+        )
 
 
 def test_evidence_device_channel_requires_device_identity() -> None:

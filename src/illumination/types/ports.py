@@ -7,7 +7,14 @@ from typing import Protocol, runtime_checkable
 
 from illumination.types.common import ArtifactRef
 from illumination.types.enums import GoalRole
-from illumination.types.execution import Action, Cycle, Evidence, Review
+from illumination.types.execution import (
+    Action,
+    Cycle,
+    Evidence,
+    IdempotencyRecord,
+    Review,
+    SyncOpRecord,
+)
 from illumination.types.goal import Goal, GoalVersion
 from illumination.types.llm import LLMRequest, LLMResponse
 
@@ -53,6 +60,10 @@ class GoalRepositoryPort(Protocol):
 
     def get(self, goal_id: str) -> Goal | None:
         """按 id 读取目标；不存在返回 None。"""
+        ...
+
+    def get_owned(self, user_id: str, goal_id: str) -> Goal | None:
+        """读取属于该用户的目标；跨用户访问返回 None。"""
         ...
 
     def find_active_primary(self, user_id: str) -> Goal | None:
@@ -141,6 +152,40 @@ class ReviewRepositoryPort(Protocol):
 
 
 @runtime_checkable
+class IdempotencyRepositoryPort(Protocol):
+    """在线请求的短 TTL 重放缓存；按用户与 scope 隔离。"""
+
+    def find(self, *, user_id: str, scope: str, key: str) -> IdempotencyRecord | None:
+        """命中返回原记录；未命中返回 None。"""
+        ...
+
+    def save(
+        self,
+        *,
+        user_id: str,
+        scope: str,
+        key: str,
+        evidence_id: str,
+        expires_at: datetime,
+    ) -> None:
+        """登记一次成功写入，供后续重放。"""
+        ...
+
+
+@runtime_checkable
+class SyncOpRepositoryPort(Protocol):
+    """离线补传账本；按 (user_id, client_op_id) 去重。"""
+
+    def get(self, *, user_id: str, client_op_id: str) -> SyncOpRecord | None:
+        """读取已记录的离线操作。"""
+        ...
+
+    def add(self, record: SyncOpRecord) -> None:
+        """追加一条离线裁决记录。"""
+        ...
+
+
+@runtime_checkable
 class UnitOfWorkPort(Protocol):
     """服务层使用的事务边界；提交或回滚由调用方显式决定。"""
 
@@ -167,6 +212,16 @@ class UnitOfWorkPort(Protocol):
     @property
     def reviews(self) -> ReviewRepositoryPort:
         """评估仓储。"""
+        ...
+
+    @property
+    def idempotency(self) -> IdempotencyRepositoryPort:
+        """在线幂等重放仓储。"""
+        ...
+
+    @property
+    def sync_ops(self) -> SyncOpRepositoryPort:
+        """离线操作账本。"""
         ...
 
     def commit(self) -> None:

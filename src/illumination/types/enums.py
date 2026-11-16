@@ -174,6 +174,21 @@ class EvidenceMode(StrEnum):
     LOG_ONLY = "log_only"
 
 
+class SyncOpType(StrEnum):
+    """离线补传允许的操作类型；目标编辑不在其中。"""
+
+    SUBMIT_EVIDENCE = "submit_evidence"
+    COMPLETE_ACTION = "complete_action"
+
+
+class SyncOpOutcome(StrEnum):
+    """离线操作的裁决结果；duplicate 不产生新写入。"""
+
+    APPLIED = "applied"
+    DUPLICATE = "duplicate"
+    REJECTED = "rejected"
+
+
 class CycleResult(StrEnum):
     """周期评估结论；partial 是目标级属性，不是周期结论。"""
 

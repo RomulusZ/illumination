@@ -19,6 +19,8 @@ from illumination.types.enums import (
     MetricKey,
     ReviewScope,
     StageDecision,
+    SyncOpOutcome,
+    SyncOpType,
 )
 
 
@@ -87,6 +89,7 @@ class EvidenceCreate(IlluminationModel):
     confirmed_at: datetime | None = None
     expires_at: datetime | None = None
     source_device: str | None = None
+    external_id: str | None = None
     entered_value: float | None = None
     entered_unit: str | None = None
     value_calc: float | None = None
@@ -107,6 +110,8 @@ class EvidenceCreate(IlluminationModel):
             raise ValueError("候选证据只能来自设备")
         if self.source_channel is EvidenceChannel.DEVICE and not self.source_device:
             raise ValueError("设备来源必须说明 source_device")
+        if self.status is EvidenceStatus.CANDIDATE and not self.external_id:
+            raise ValueError("候选证据必须提供设备外部 id")
         return self
 
     @model_validator(mode="after")
@@ -169,3 +174,26 @@ class ReviewCreate(IlluminationModel):
 
 class Review(ReviewCreate):
     review_id: str = Field(min_length=1)
+
+
+class IdempotencyRecord(IlluminationModel):
+    """在线请求的重放指针；只保存证据引用，不复制证据正文。"""
+
+    user_id: str = Field(min_length=1)
+    scope: str = Field(min_length=1)
+    key: str = Field(min_length=1)
+    evidence_id: str = Field(min_length=1)
+    expires_at: datetime
+
+
+class SyncOpRecord(IlluminationModel):
+    """离线补传账本；按 (user_id, client_op_id) 去重。"""
+
+    user_id: str = Field(min_length=1)
+    client_op_id: str = Field(min_length=1)
+    device_id: str = Field(min_length=1)
+    op_type: SyncOpType
+    captured_at: datetime | None = None
+    outcome: SyncOpOutcome = SyncOpOutcome.APPLIED
+    result_ref: str | None = None
+    error_code: str | None = None
