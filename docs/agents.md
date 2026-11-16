@@ -30,6 +30,7 @@
 | 规划服务与结构化输出校验 | 已落地 | `service/planning.py`、`service/llm_structured.py` |
 | LangGraph 最小图 | 已落地（plan → finalize） | `runtime/pipeline.py` |
 | Artifact store | 已落地（本地文件） | `repo/file_artifact_store.py` |
+| 目标侧持久化与迁移 | 已落地（users/goals/goal_versions/goal_metrics） | `repo/db.py`、`repo/models.py`、`alembic/` |
 | CLI | 已落地（`run`） | `ui/cli.py` |
 | 执行器 / 预算 / 审计 / HITL / 沙箱 | 未实现 | 见路线图 |
 
@@ -169,6 +170,7 @@ LANGSMITH_TRACING / LANGSMITH_API_KEY / LANGSMITH_PROJECT
 uv run pytest
 uv run pytest tests/runtime/test_pipeline.py -q
 uv run pytest tests/arch/test_arch_checker.py
+uv run alembic upgrade head   # 使用 ILLUMINATION_DATABASE_URL
 ```
 
 ## 9. 工作流
