@@ -57,6 +57,7 @@ tests/fakes.py    跨测试复用的 fake ports
 ## 5. 数据库测试
 
 - Types、Config 与纯领域 Service 不连接数据库；SQL Repo、涉及持久化的 Service 和 E2E 使用真实 PostgreSQL 17。
+- 本地容器 `infra-postgres` 暴露 `127.0.0.1:15432`；集成测试读取 `ILLUMINATION_TEST_DATABASE_URL`，默认指向 `illumination_test`，不得连接开发库 `illumination`。
 - 测试库必须与开发库、生产库隔离；禁止 SQLite 替代、自动降级或静默回退。
 - 会话级 Fixture 只创建一次 Schema；普通测试用事务回滚隔离，需要验证真实提交的用例使用独立事务并清理数据。
 - 迁移测试在独立空库执行 upgrade/downgrade/upgrade，不用已有开发库验证迁移。

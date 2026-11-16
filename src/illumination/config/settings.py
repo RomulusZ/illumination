@@ -16,7 +16,8 @@ LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 AgentMode = Literal["off", "explore", "all"]
 ClockSkewStrategy = Literal["clamp_and_warn", "reject"]
 
-_DEV_DATABASE_URL = "postgresql+psycopg://localhost:5432/illumination"
+_DEV_DATABASE_URL = "postgresql+psycopg://postgres@127.0.0.1:15432/illumination"
+_DEV_TEST_DATABASE_URL = "postgresql+psycopg://postgres@127.0.0.1:15432/illumination_test"
 
 
 class Settings(BaseSettings):
@@ -37,6 +38,7 @@ class Settings(BaseSettings):
 
     # 2. 应用与持久化
     illumination_database_url: str = _DEV_DATABASE_URL
+    illumination_test_database_url: str = _DEV_TEST_DATABASE_URL
     illumination_invite_codes: SecretStr = SecretStr("")
     illumination_agent_mode: AgentMode = "off"
     illumination_day_cutoff: str = Field(default="04:00", pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
@@ -71,7 +73,7 @@ class Settings(BaseSettings):
     langsmith_api_key: SecretStr | None = None
     langsmith_project: str = "illumination-dev"
 
-    @field_validator("illumination_database_url")
+    @field_validator("illumination_database_url", "illumination_test_database_url")
     @classmethod
     def _validate_database_url(cls, value: str) -> str:
         try:
@@ -88,6 +90,8 @@ class Settings(BaseSettings):
             raise ValueError("生产环境必须提供 OPENAI_API_KEY")
         if self.is_prod and self.illumination_database_url == _DEV_DATABASE_URL:
             raise ValueError("生产环境必须显式提供 ILLUMINATION_DATABASE_URL")
+        if self.illumination_database_url == self.illumination_test_database_url:
+            raise ValueError("测试数据库 URL 必须与开发数据库 URL 不同")
         if self.is_prod and not self.illumination_invite_codes.get_secret_value().strip():
             raise ValueError("生产环境必须提供 ILLUMINATION_INVITE_CODES")
         if self.langsmith_tracing and not self._secret_value(self.langsmith_api_key):

@@ -20,6 +20,23 @@ RunRequest → 规划服务（结构化输出校验）→ LangGraph 计划节点
 uv sync --frozen --group dev
 ```
 
+本地基础设施由 Docker 提供：
+
+| 服务 | 容器 | 地址 |
+|------|------|------|
+| PostgreSQL 17 | `infra-postgres` | `127.0.0.1:15432` |
+| Redis 7 | `infra-redis` | `127.0.0.1:16379` |
+
+开发库与测试库必须是两个不同的 PostgreSQL 数据库：
+
+```bash
+docker exec infra-postgres psql -U postgres -c "CREATE DATABASE illumination;"
+docker exec infra-postgres psql -U postgres -c "CREATE DATABASE illumination_test;"
+cp .env.example .env   # 填入本地密码后使用
+```
+
+测试只连接 `illumination_test`，禁止指向开发库。Redis 当前未被 P0 使用，设计上仅作为可选的会话中间态缓存。
+
 离线跑通链路（不调用外部模型）：
 
 ```bash

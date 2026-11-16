@@ -11,7 +11,14 @@ def test_defaults_are_dev_safe() -> None:
     assert settings.illumination_env == "dev"
     assert not settings.is_prod
     assert settings.illumination_max_steps == 8
-    assert settings.illumination_database_url == "postgresql+psycopg://localhost:5432/illumination"
+    assert (
+        settings.illumination_database_url
+        == "postgresql+psycopg://postgres@127.0.0.1:15432/illumination"
+    )
+    assert (
+        settings.illumination_test_database_url
+        == "postgresql+psycopg://postgres@127.0.0.1:15432/illumination_test"
+    )
     assert settings.illumination_agent_mode == "off"
     assert settings.illumination_day_cutoff == "04:00"
     assert settings.illumination_latest_start_time == "21:00"
@@ -73,6 +80,23 @@ def test_prod_requires_explicit_database_url() -> None:
 def test_invalid_or_non_postgresql_database_url_is_rejected(database_url: str) -> None:
     with pytest.raises(ValidationError):
         Settings(_env_file=None, illumination_database_url=database_url)
+
+
+@pytest.mark.parametrize("field", ["illumination_database_url", "illumination_test_database_url"])
+def test_both_database_urls_reject_non_postgresql(field: str) -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, **{field: "sqlite:///./.data/illumination.db"})
+
+
+def test_test_database_must_differ_from_development_database() -> None:
+    shared = "postgresql+psycopg://postgres@127.0.0.1:15432/illumination"
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(
+            _env_file=None,
+            illumination_database_url=shared,
+            illumination_test_database_url=shared,
+        )
+    assert "测试数据库" in str(exc_info.value)
 
 
 @pytest.mark.parametrize(

@@ -33,13 +33,10 @@ uv run python lint/arch_checker.py
 4. Agent 工具白名单到底是 6 个还是 10 个。
 5. 不变式以 PRD 的 7 条还是需求整合的 5 条为准。
 
-当前目录尚未初始化 Git。开始 P0-01 前执行一次：
-
-```bash
-git init
-git add .
-git commit -m "chore: bootstrap generic agent harness skeleton"
-```
+当前基线：Git 已初始化，主开发分支为 `branch_p0`；本地 Docker 提供
+`infra-postgres`（`127.0.0.1:15432`，库 `illumination` / `illumination_test`）与
+`infra-redis`（`127.0.0.1:16379`，P0 暂不使用）。开发与测试连接信息写入本地 `.env`，
+不提交仓库。
 
 ---
 
