@@ -25,6 +25,7 @@ from illumination.repo.models import SyncOp as SyncOpRow
 from illumination.types.enums import (
     EvidenceStatus,
     GoalChangeKind,
+    GoalClosureType,
     GoalRole,
     GoalStatus,
     MetricKey,
@@ -82,6 +83,7 @@ class SqlGoalRepository:
                 role=goal.role,
                 status=goal.status,
                 name_final=goal.name_final,
+                closure_type=goal.closure_type.value if goal.closure_type else None,
                 current_version=goal.current_version,
                 plan_start_date=goal.plan_start_date,
                 started_at=goal.started_at,
@@ -127,6 +129,15 @@ class SqlGoalRepository:
             )
         )
         return int(count or 0)
+
+    def save(self, goal: Goal) -> None:
+        row = self._session.get(GoalRow, _uuid(goal.goal_id))
+        if row is None:
+            raise LookupError(f"goal {goal.goal_id} 不存在")
+        row.status = goal.status
+        row.closed_at = goal.closed_at
+        row.closure_type = goal.closure_type.value if goal.closure_type else None
+        self._session.flush()
 
     def append_version(self, version: GoalVersion) -> None:
         row, metrics = _version_rows(version)
@@ -379,6 +390,7 @@ def _to_goal(row: GoalRow) -> Goal:
         plan_start_date=row.plan_start_date,
         started_at=row.started_at,
         closed_at=row.closed_at,
+        closure_type=GoalClosureType(row.closure_type) if row.closure_type else None,
     )
 
 

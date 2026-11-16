@@ -11,6 +11,7 @@ from illumination.types.base import IlluminationModel
 from illumination.types.enums import (
     BaselineState,
     GoalChangeKind,
+    GoalClosureType,
     GoalIntent,
     GoalRole,
     GoalStatus,
@@ -144,6 +145,7 @@ class Goal(IlluminationModel):
     plan_start_date: date | None = None
     started_at: datetime | None = None
     closed_at: datetime | None = None
+    closure_type: GoalClosureType | None = None
 
     @model_validator(mode="after")
     def _validate_role(self) -> Self:

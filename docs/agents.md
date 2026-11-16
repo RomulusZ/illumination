@@ -35,6 +35,7 @@
 | 业务日期、周期窗口与时钟偏差 | 已落地 | `service/time_rules.py` |
 | 就绪度 L0–L3 与停锁规则 | 已落地 | `service/readiness.py` |
 | 目标锁定与版本快照 | 已落地（L3 校验、名额、append-only v1） | `service/goal_lifecycle.py` |
+| Goal 撤回、暂停与收口 | 已落地（24h 窗口、暂停/恢复、8 态迁移、显式收口原因） | `service/goal_closure.py` |
 | Cycle 计划与激活 | 已落地（frozen → active、单 active、14 天窗口） | `service/cycle_service.py` |
 | 动作计划与完成 | 已落地（绑定观测项、重复完成幂等） | `service/action_service.py` |
 | 证据提交与幂等 | 已落地（manual/candidate/confirmed、双通道去重、仅 confirmed 计数） | `service/evidence_service.py` |
@@ -130,8 +131,8 @@ START → plan → finalize → END
 | `RunResult` | `types/plan.py` | `finished_at ≥ started_at` |
 | `ArtifactRef` | `types/common.py` | `sha256` 为 64 位小写十六进制 |
 | `LocalDateRange` | `types/common.py` | 本地日期闭区间；`end_date ≥ start_date`；`days` 含首尾 |
-| 领域枚举 | `types/enums.py` | Goal 8 态、Cycle 4 态、Evidence 通道/状态、Readiness L0–L3、CycleResult、StageDecision、Goal/Metric 词汇；取值与 DDL 一致 |
-| `Intent` / `Goal` / `GoalVersion` / `Metric` | `types/goal.py` | 版本只追加；1 主 + 2 辅槽位唯一；advance 必须有期限；基线三态与目标形态由代码校验 |
+| 领域枚举 | `types/enums.py` | Goal 8 态与收口原因、Cycle 4 态、Evidence 通道/状态、Readiness L0–L3、CycleResult、StageDecision、Goal/Metric 词汇；取值与 DDL 一致 |
+| `Intent` / `Goal` / `GoalVersion` / `Metric` | `types/goal.py` | 版本只追加；Goal 状态迁移携带显式收口原因；1 主 + 2 辅槽位唯一；advance 必须有期限；基线三态与目标形态由代码校验 |
 | `Cycle` / `Action` / `Evidence` / `Review` | `types/execution.py` | 周期左闭右开；动作必须绑定 `metric_key`；证据来源与 `captured_at` 必填、candidate 仅设备来源且需 `external_id`；Review 两种 scope 字段互斥 |
 | `IdempotencyRecord` / `SyncOpRecord` | `types/execution.py` | 幂等记录只存证据指针；离线账本按 `(user_id, client_op_id)` 去重 |
 | `OfflineOperation` / `OfflineOperationResult` | `service/offline_sync.py` | 只应用证据与动作完成；逐字段给出 accepted/rejected/conflict 与原因码 |

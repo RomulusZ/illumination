@@ -23,6 +23,7 @@ from illumination.types.enums import (
     EvidenceChannel,
     EvidenceStatus,
     GoalChangeKind,
+    GoalClosureType,
     GoalIntent,
     GoalRole,
     GoalStatus,
@@ -145,6 +146,30 @@ def test_uow_persists_goal_versions_and_active_primary(session: Session) -> None
     assert loaded.version_id == version.version_id
     assert loaded.metrics[0].metric_key is MetricKey.PRIMARY
     assert loaded.metrics[0].target_value == 3
+
+
+def test_goal_save_updates_closure_without_touching_version(session: Session) -> None:
+    user = _user(session)
+    goal = _goal()
+    version = _version(goal.goal_id)
+    uow = SqlUnitOfWork(session)
+    uow.goals.add(user_id=str(user.id), goal=goal)
+    uow.goals.append_version(version)
+    uow.commit()
+
+    closed = goal.model_copy(
+        update={
+            "status": GoalStatus.ACHIEVED,
+            "closed_at": START,
+            "closure_type": GoalClosureType.ACHIEVED,
+        }
+    )
+    uow.goals.save(closed)
+    uow.commit()
+    session.expire_all()
+
+    assert uow.goals.get(goal.goal_id) == closed
+    assert uow.goals.get_version(goal.goal_id, 1) == version
 
 
 def test_version_append_keeps_history_and_rejects_duplicate(session: Session) -> None:

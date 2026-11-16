@@ -74,6 +74,10 @@ class GoalRepositoryPort(Protocol):
         """统计该用户 planned / active 的指标名额占用。"""
         ...
 
+    def save(self, goal: Goal) -> None:
+        """更新目标状态与收口字段；不存在时抛 LookupError。"""
+        ...
+
     def append_version(self, version: GoalVersion) -> None:
         """追加一条版本快照及其指标；历史版本不更新。"""
         ...

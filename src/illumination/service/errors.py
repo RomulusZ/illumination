@@ -79,6 +79,22 @@ class GoalLockRejected(IlluminationError):
         self.reason = reason
 
 
+class GoalNotFoundError(IlluminationError):
+    """目标不存在或不属于当前用户。"""
+
+    code = "goal_not_found"
+
+
+class GoalTransitionRejected(IlluminationError):
+    """目标状态迁移违反状态机、撤回窗口或收口口径。"""
+
+    code = "goal_transition_rejected"
+
+    def __init__(self, message: str, *, reason: str) -> None:
+        super().__init__(message)
+        self.reason = reason
+
+
 class CycleNotFoundError(IlluminationError):
     """单元不存在。"""
 

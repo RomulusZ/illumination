@@ -22,6 +22,19 @@ class GoalStatus(StrEnum):
     PAUSED = "paused"
 
 
+class GoalClosureType(StrEnum):
+    """目标收口原因；与数据库约束保持一致。"""
+
+    ACHIEVED = "achieved"
+    PARTIAL = "partial"
+    ARCHIVED_AT_MET = "archived_at_met"
+    REPLANNED = "replanned"
+    ABANDONED = "abandoned"
+    EXPIRED = "expired"
+    SPLIT = "split"
+    MERGED = "merged"
+
+
 class CycleState(StrEnum):
     """节奏单元状态（4 态）。"""
 
