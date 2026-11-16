@@ -186,8 +186,25 @@ uv run alembic upgrade head   # 使用 ILLUMINATION_DATABASE_URL
 1. 读 `AGENTS.md` 与本文。
 2. 把任务拆成可验收小步。
 3. 先写失败测试，再写实现。
-4. 自检：arch_checker → ruff → mypy → pytest。
+4. 自检：`arch_checker` → `ruff check` → `ruff format --check` → `mypy` → `pytest`。
 5. 交付：改了什么 / 为什么 / 怎么验证 / 风险与回滚。
+
+### 9.1 自动提交与推送（硬约束）
+
+每个节点完成后的固定流程，不得省略或乱序：
+
+1. **生成提交信息**：`<type>(<scope>): <summary>`，正文写清“为什么”，一个节点一条提交。
+2. **跑质量门**：`uv run python lint/arch_checker.py`、`uv run ruff check .`、
+   `uv run ruff format --check .`、`uv run mypy`、`uv run pytest`。
+3. **全部通过才提交**：`git add <本节点明确修改的文件>`，检查 `git diff --cached` 后
+   `git commit`；禁止 `git add -A`、禁止 `--no-verify`。
+4. **自动推送**：`git push illumination branch_p0`；不 force push，不推其他分支。
+5. **失败即停**：任一质量门、commit 或 push 失败，都不能声称“已完成/已提交/已推送”，
+   需报告失败命令、关键输出与本地领先远端的提交数。
+
+CI/CD 由 `.github/workflows/ci.yml` 承担：push 与 PR 都复跑同一组质量门，并启动
+PostgreSQL 17 service 供迁移、仓储、幂等与 E2E 测试使用。本地通过后推送只是第一关，
+推送后仍要确认 Actions 结果；若 CI 失败，按同一失败即停规则处理。
 
 ## 10. 完成定义
 

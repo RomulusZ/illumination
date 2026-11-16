@@ -68,9 +68,14 @@ uv run illumination run --objective "验证骨架链路" --out out --stub
 1. 开工前：读本文件 → `docs/agents.md` → 与本任务相关的 `docs/` 章节。
 2. 计划：拆成可验收的小步，每步有产出物、通过条件与预算。
 3. 实现：先写或改测试，再写实现；测试默认 mock LLM 与网络，不做真实调用。
-4. 自检：`arch_checker` → ruff → mypy → pytest。
-5. 提交前安装并运行 pre-commit；完整 pytest 由本地或 CI 执行。
-6. 交付：说明改了什么 / 为什么 / 怎么验证 / 风险与回滚；文档与命令同步更新。
+4. 自检：`arch_checker` → `ruff check` → `ruff format --check` → `mypy` → `pytest`。
+5. 自动交付：每次改动完成后生成 Conventional Commits 提交信息；五项质量门全部通过才
+   `git commit` 并 `git push illumination branch_p0`，禁止跳过失败项或跳过 hook。
+6. 失败即停：任一质量门、commit 或 push 失败都不得声称完成；如实报告阻塞点与未推送状态。
+7. 交付说明：改了什么 / 为什么 / 怎么验证 / 风险与回滚；文档与命令同步更新。
+
+CI/CD 事实源：`.github/workflows/ci.yml` 在 push 与 PR 上复跑同一组质量门，并提供
+PostgreSQL 17 service 供数据库测试使用；推送成功不等于 CI 通过，二者都要如实报告。
 
 ## 6. 按任务找文档
 
