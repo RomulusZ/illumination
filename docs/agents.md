@@ -36,6 +36,7 @@
 | 就绪度 L0–L3 与停锁规则 | 已落地 | `service/readiness.py` |
 | 目标锁定与版本快照 | 已落地（L3 校验、名额、append-only v1） | `service/goal_lifecycle.py` |
 | Goal 撤回、暂停与收口 | 已落地（24h 窗口、暂停/恢复、8 态迁移、显式收口原因） | `service/goal_closure.py` |
+| 入口对话结构化输出 | 已落地（8 推进轮、识别/三问/回述/摘要、注入隔离） | `service/intake.py` |
 | Cycle 计划与激活 | 已落地（frozen → active、单 active、14 天窗口） | `service/cycle_service.py` |
 | 动作计划与完成 | 已落地（绑定观测项、重复完成幂等） | `service/action_service.py` |
 | 证据提交与幂等 | 已落地（manual/candidate/confirmed、双通道去重、仅 confirmed 计数） | `service/evidence_service.py` |
@@ -137,6 +138,7 @@ START → plan → finalize → END
 | `IdempotencyRecord` / `SyncOpRecord` | `types/execution.py` | 幂等记录只存证据指针；离线账本按 `(user_id, client_op_id)` 去重 |
 | `OfflineOperation` / `OfflineOperationResult` | `service/offline_sync.py` | 只应用证据与动作完成；逐字段给出 accepted/rejected/conflict 与原因码 |
 | `CycleReviewRule` / `CycleReviewResult` | `service/review_service.py` | 判定口径由模板显式注入；结果保留证据、数据点与动作计数快照 |
+| `IntakeOutput` / `IntakeRecap` | `service/intake.py` | 识别、三问、回述与一行摘要均为闭合模型；仅成功输出计推进轮，最多 8 轮 |
 | `LLMRequest` / `LLMResponse` | `types/llm.py` | 消息非空；usage 非负 |
 
 约定：

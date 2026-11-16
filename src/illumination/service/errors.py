@@ -69,6 +69,12 @@ class GoalQuotaExceededError(IlluminationError):
         self.limit = limit
 
 
+class IntakeTurnLimitExceeded(IlluminationError):
+    """入口对话已达到推进轮硬上限。"""
+
+    code = "intake_turn_limit_exceeded"
+
+
 class GoalLockRejected(IlluminationError):
     """锁定输入形状不合法；reason 为稳定标识。"""
 
