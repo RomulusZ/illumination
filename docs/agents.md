@@ -43,6 +43,7 @@
 | 证据提交与幂等 | 已落地（manual/candidate/confirmed、双通道去重、仅 confirmed 计数） | `service/evidence_service.py` |
 | 离线补传与逐字段裁决 | 已落地（仅证据/动作完成、时钟策略、重放去重、冲突不覆盖） | `service/offline_sync.py` |
 | 周期评估与收口 | 已落地（1 天宽限、主指标按日聚合、显式判定口径、append-only Review） | `service/review_service.py` |
+| FastAPI 应用与认证 | 已落地（健康检查、邀请码登录、Cookie+CSRF/Bearer、统一错误映射；进程内会话，重启失效） | `runtime/app.py`、`ui/api/` |
 | CLI | 已落地（`run`） | `ui/cli.py` |
 | 执行器 / 预算 / 审计 / HITL / 沙箱 | 未实现 | 见路线图 |
 
@@ -143,6 +144,7 @@ START → plan → finalize → END
 | `CycleReviewRule` / `CycleReviewResult` | `service/review_service.py` | 判定口径由模板显式注入；结果保留证据、数据点与动作计数快照 |
 | `IntakeOutput` / `IntakeRecap` | `service/intake.py` | 识别、三问、回述与一行摘要均为闭合模型；仅成功输出计推进轮，最多 8 轮 |
 | `IntakeGraphRequest` / `IntakeGraphResult` | `runtime/intake_graph.py` | 图输入正文只在 artifact 中持久化；结果只暴露终态、摘要、类型化就绪度与产物指针 |
+| `AuthSession` / `LoginRequest` / `LoginResponse` | `types/auth.py` | `user_id` 由服务端会话生成；登录请求禁止额外字段，邀请码使用 `SecretStr` |
 | `LLMRequest` / `LLMResponse` | `types/llm.py` | 消息非空；usage 非负 |
 
 约定：

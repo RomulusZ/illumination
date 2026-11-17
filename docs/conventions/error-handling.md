@@ -88,6 +88,11 @@ class ArtifactStoreError(RepoError): ...
 | 成功 / partial | 0 | 结果路径与状态 |
 | 未知内部错误 | 1 | 通用说明与关联 ID；栈只进受控日志 |
 
+API 统一返回 `{"error": {"code": "...", "message": "..."}}`。请求校验失败为
+422 `invalid_request`；缺少或无效会话为 401；Cookie 会话的 CSRF 失败为 403；
+未知异常为 500 `internal_error`。领域异常按稳定 `code` 显式映射 HTTP 状态，
+响应使用固定安全说明，不透出异常消息、校验输入详情或内部栈。
+
 ## 8. 禁止事项
 
 - Repo 抛业务异常或做领域判断。

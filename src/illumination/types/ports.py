@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Protocol, runtime_checkable
 
+from illumination.types.auth import AuthSession
 from illumination.types.common import ArtifactRef
 from illumination.types.enums import GoalRole
 from illumination.types.execution import (
@@ -198,6 +199,23 @@ class SyncOpRepositoryPort(Protocol):
 
     def add(self, record: SyncOpRecord) -> None:
         """追加一条离线裁决记录。"""
+        ...
+
+
+@runtime_checkable
+class SessionStorePort(Protocol):
+    """Opaque access-token to server-side session mapping."""
+
+    def save(self, token: str, session: AuthSession) -> None:
+        """Store one newly issued session."""
+        ...
+
+    def get(self, token: str) -> AuthSession | None:
+        """Return None for an unknown or revoked token."""
+        ...
+
+    def delete(self, token: str) -> None:
+        """Revoke a token; unknown tokens are ignored."""
         ...
 
 

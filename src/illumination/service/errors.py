@@ -35,6 +35,24 @@ class ConfigurationError(IlluminationError):
     code = "configuration_invalid"
 
 
+class AuthenticationError(IlluminationError):
+    """会话凭证缺失、格式错误或已失效。"""
+
+    code = "authentication_required"
+
+
+class InvalidInviteCodeError(IlluminationError):
+    """邀请码未通过校验；响应不回显输入。"""
+
+    code = "invalid_invite_code"
+
+
+class CSRFValidationError(IlluminationError):
+    """Cookie 会话的双提交 CSRF 校验失败。"""
+
+    code = "csrf_validation_failed"
+
+
 class ClockSkewRejected(IlluminationError):
     """客户端时间与服务器时间偏差超过上限，按策略拒绝该操作。"""
 

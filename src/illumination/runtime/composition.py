@@ -12,6 +12,7 @@ from illumination.config.settings import Settings
 from illumination.repo.errors import RepoError
 from illumination.repo.file_artifact_store import FileArtifactStore
 from illumination.repo.llm_adapter import OpenAICompatibleLLM
+from illumination.repo.session_store import InMemorySessionStore
 from illumination.repo.stub_llm import StubPlannerLLM
 from illumination.repo.system_clock import SystemClock
 from illumination.runtime.intake_graph import (
@@ -21,6 +22,7 @@ from illumination.runtime.intake_graph import (
     run_intake_graph,
 )
 from illumination.runtime.pipeline import run_once
+from illumination.service.auth import AuthService
 from illumination.service.errors import ConfigurationError
 from illumination.types.plan import RunRequest, RunResult
 from illumination.types.ports import ArtifactStorePort, ClockPort, LLMPort, UnitOfWorkPort
@@ -34,6 +36,7 @@ class Runtime:
     clock: ClockPort
     store: ArtifactStorePort
     run_id_prefix: str = "ill"
+    auth: AuthService | None = None
     intake_checkpointer: Any = field(default_factory=InMemorySaver)
 
     async def run(self, request: RunRequest) -> RunResult:
@@ -100,4 +103,8 @@ def build_runtime(
         clock=clock,
         store=store,
         run_id_prefix=settings.illumination_run_id_prefix,
+        auth=AuthService(
+            invite_codes=settings.illumination_invite_codes.get_secret_value(),
+            sessions=InMemorySessionStore(),
+        ),
     )
