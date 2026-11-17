@@ -37,6 +37,7 @@
 | 目标锁定与版本快照 | 已落地（L3 校验、名额、append-only v1） | `service/goal_lifecycle.py` |
 | Goal 撤回、暂停与收口 | 已落地（24h 窗口、暂停/恢复、8 态迁移、显式收口原因） | `service/goal_closure.py` |
 | 入口对话结构化输出 | 已落地（8 推进轮、识别/三问/回述/摘要、注入隔离） | `service/intake.py` |
+| Intake LangGraph 子图 | 已落地（intake → readiness → recap → lock、指针化 checkpoint、恢复不新增轮次） | `runtime/intake_graph.py` |
 | Cycle 计划与激活 | 已落地（frozen → active、单 active、14 天窗口） | `service/cycle_service.py` |
 | 动作计划与完成 | 已落地（绑定观测项、重复完成幂等） | `service/action_service.py` |
 | 证据提交与幂等 | 已落地（manual/candidate/confirmed、双通道去重、仅 confirmed 计数） | `service/evidence_service.py` |
@@ -105,6 +106,8 @@ START → plan → finalize → END
 
 - `plan`：调用 `service.planning.plan_run`；领域错误转 `failed`。
 - `finalize`：写 `plan.json`；存储失败转 `failed`。
+- Intake 子图按 `intake → readiness → recap → lock` 路由；未就绪为 `stopped`，模型或锁定失败为 `failed`，只有完成锁定才是 `locked`。
+- Intake checkpoint 只保存 ID、摘要、状态与 `ArtifactRef`；输入、模型输出、就绪度和回述正文均落 artifact，按 thread 恢复时不重新调用模型。
 - 节点返回值是状态增量，不是完整状态。
 - 新增并行字段时必须声明 reducer；同 key 不同值抛错。
 
@@ -139,6 +142,7 @@ START → plan → finalize → END
 | `OfflineOperation` / `OfflineOperationResult` | `service/offline_sync.py` | 只应用证据与动作完成；逐字段给出 accepted/rejected/conflict 与原因码 |
 | `CycleReviewRule` / `CycleReviewResult` | `service/review_service.py` | 判定口径由模板显式注入；结果保留证据、数据点与动作计数快照 |
 | `IntakeOutput` / `IntakeRecap` | `service/intake.py` | 识别、三问、回述与一行摘要均为闭合模型；仅成功输出计推进轮，最多 8 轮 |
+| `IntakeGraphRequest` / `IntakeGraphResult` | `runtime/intake_graph.py` | 图输入正文只在 artifact 中持久化；结果只暴露终态、摘要、类型化就绪度与产物指针 |
 | `LLMRequest` / `LLMResponse` | `types/llm.py` | 消息非空；usage 非负 |
 
 约定：

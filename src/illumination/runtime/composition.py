@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
+
+from langgraph.checkpoint.memory import InMemorySaver
 
 from illumination.config.settings import Settings
 from illumination.repo.errors import RepoError
@@ -11,10 +14,16 @@ from illumination.repo.file_artifact_store import FileArtifactStore
 from illumination.repo.llm_adapter import OpenAICompatibleLLM
 from illumination.repo.stub_llm import StubPlannerLLM
 from illumination.repo.system_clock import SystemClock
+from illumination.runtime.intake_graph import (
+    IntakeGraphRequest,
+    IntakeGraphResult,
+    resume_intake_graph,
+    run_intake_graph,
+)
 from illumination.runtime.pipeline import run_once
 from illumination.service.errors import ConfigurationError
 from illumination.types.plan import RunRequest, RunResult
-from illumination.types.ports import ArtifactStorePort, ClockPort, LLMPort
+from illumination.types.ports import ArtifactStorePort, ClockPort, LLMPort, UnitOfWorkPort
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +34,7 @@ class Runtime:
     clock: ClockPort
     store: ArtifactStorePort
     run_id_prefix: str = "ill"
+    intake_checkpointer: Any = field(default_factory=InMemorySaver)
 
     async def run(self, request: RunRequest) -> RunResult:
         return await run_once(
@@ -33,6 +43,29 @@ class Runtime:
             clock=self.clock,
             store=self.store,
             run_id_prefix=self.run_id_prefix,
+        )
+
+    async def run_intake(
+        self, request: IntakeGraphRequest, *, uow: UnitOfWorkPort, thread_id: str
+    ) -> IntakeGraphResult:
+        return await run_intake_graph(
+            request=request,
+            llm=self.llm,
+            clock=self.clock,
+            store=self.store,
+            uow=uow,
+            checkpointer=self.intake_checkpointer,
+            thread_id=thread_id,
+        )
+
+    async def resume_intake(self, *, uow: UnitOfWorkPort, thread_id: str) -> IntakeGraphResult:
+        return await resume_intake_graph(
+            llm=self.llm,
+            clock=self.clock,
+            store=self.store,
+            uow=uow,
+            checkpointer=self.intake_checkpointer,
+            thread_id=thread_id,
         )
 
 

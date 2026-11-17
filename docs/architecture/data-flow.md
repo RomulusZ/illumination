@@ -34,6 +34,19 @@ CLI / API
 - 并行字段必须声明 reducer；同 key 不同值抛错，不静默覆盖。
 - 时间只来自 `ClockPort`，禁止在节点内直接读系统时钟。
 
+### 2.1 Intake 子图状态
+
+```text
+IntakeGraphRequest
+  → intake-input.json（正文 artifact）
+  → intake → readiness → recap → lock
+  → IntakeGraphResult（locked / stopped / failed + 摘要与指针）
+```
+
+`IntakeState` 只保存 `goal_id`、一行摘要、终态、稳定错误码和各阶段 `ArtifactRef`。
+用户输入、Goal/GoalVersion、模型结构化输出、就绪度与回述均通过 artifact 读写。
+使用同一 `thread_id` 恢复已完成图时不新增模型请求；未就绪停锁不得调用锁定服务。
+
 ## 3. Artifact 契约
 
 `ArtifactRef` 至少包含：
